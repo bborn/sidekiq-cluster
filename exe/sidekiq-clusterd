@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+
+STDERR.sync = STDOUT.sync = true
+
+require 'rubygems'
+require 'optparse'
+require 'pathname'
+require_relative '../lib/sidekiq/cluster/cli'
+
+begin
+  require 'daemons'
+rescue LoadError
+  raise "You need to add gem 'daemons' to your Gemfile or Rubygems if you wish to use it."
+end
+
+# TODO: Option parsing is still buggy due to double "--". implement a better OptionParser implementation
+# for now, you can use:
+# sidekiq-clusterd daemon-command [daemon-options] -- [sidekiq-cluster-options] -- [sidekiq-options]
+# e.g.
+# sidekiq-clusterd start --log_dir /var/apps/rails-app/tmp -- -N 2 -n some-name -- -L tmps/sidekiq.log
+
+# https://github.com/ghazel/daemons
+# default options for daemons
+@options = {
+  quiet: false,
+  log_dir: File.expand_path("./tmp"),
+  log_output: true,
+  monitor: false,
+}
+
+# parse arguments: [daemon-options] -- [options] -- [sidekiq-options]
+# example: ["run", "--", "-N", "2", "-n", "some-name", "--", "-L", "tmp//sidekiq.log"]
+# extract cluster options:
+puts("registered CLI options: #{ARGV.to_s}")
+@cluster_options = ARGV.to_a.dup
+@cluster_options.shift if @cluster_options[0] && @cluster_options[0].match(/start|stop|restart|run/)
+@cluster_options.shift if @cluster_options[1] && @cluster_options[0].match(/\-\-/)
+puts("sidekiq-cluster options: #{@cluster_options.to_s}")
+
+@daemon_options = ARGV.to_a.dup
+@daemon_options = @daemon_options[0..@daemon_options.index("--")-1]
+puts("daemon options: #{@daemon_options.to_s}")
+
+# overwrite log_dir
+@options[:log_dir] = @daemon_options[@daemon_options.index("--log_dir")+1..@daemon_options.index("--log_dir")+1].first if @daemon_options.index("--log_dir")
+
+# where to put PID and LOG?, make sure DIR is available
+@options[:pid_dir] = @options[:log_dir]
+Dir.mkdir(@options[:pid_dir]) unless File.exists?(@options[:pid_dir])
+Dir.mkdir(@options[:log_dir]) unless File.exists?(@options[:log_dir])
+
+Daemons.run_proc('sidekiq-cluster',
+    dir: @options[:pid_dir],
+    dir_mode: :normal,
+    log_dir: @options[:log_dir],
+    log_output: @options[:log_output],
+    ARGV: @daemon_options
+  ) do
+  puts("starting cluster with options: #{@cluster_options.to_s}")
+  Sidekiq::Cluster::CLI.new(@cluster_options).execute!
+end
