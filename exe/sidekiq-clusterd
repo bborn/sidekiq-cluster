@@ -31,14 +31,15 @@ end
 # parse arguments: [daemon-options] -- [options] -- [sidekiq-options]
 # example: ["run", "--", "-N", "2", "-n", "some-name", "--", "-L", "tmp//sidekiq.log"]
 # extract cluster options:
-puts("registered CLI options: #{ARGV.to_s}")
-@cluster_options = ARGV.to_a.dup
-@cluster_options.shift if @cluster_options[0] && @cluster_options[0].match(/start|stop|restart|run/)
-@cluster_options.shift if @cluster_options[1] && @cluster_options[0].match(/\-\-/)
+@registered_options = ARGV.to_a.dup
+puts("registered CLI options: #{@registered_options.to_s}")
+
+@cluster_options = []
+@cluster_options = @registered_options[@registered_options.index("--")+1..@registered_options.length]
 puts("sidekiq-cluster options: #{@cluster_options.to_s}")
 
-@daemon_options = ARGV.to_a.dup
-@daemon_options = @daemon_options[0..@daemon_options.index("--")-1]
+@daemon_options = []
+@daemon_options = @registered_options[0..@registered_options.index("--")-1]
 puts("daemon options: #{@daemon_options.to_s}")
 
 # overwrite log_dir
