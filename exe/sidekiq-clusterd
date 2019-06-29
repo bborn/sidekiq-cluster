@@ -42,6 +42,15 @@ puts("sidekiq-cluster options: #{@cluster_options.to_s}")
 @daemon_options = @registered_options[0..@registered_options.index("--")-1]
 puts("daemon options: #{@daemon_options.to_s}")
 
+
+# CLUSTER OPTIONS
+# extract `-n NAME` from cluster-options to allow multiple daemons
+# which is used by the daemon to build .pid file
+@cluser_daemon_name = @cluster_options[@cluster_options.index("-n")+1..@cluster_options.index("-n")+1].first if @cluster_options.index("-n")
+@cluser_daemon_name ||= 'sidekiq-cluster' # default name
+puts(@cluser_daemon_name)
+
+
 # overwrite log_dir
 @options[:log_dir] = @daemon_options[@daemon_options.index("--log_dir")+1..@daemon_options.index("--log_dir")+1].first if @daemon_options.index("--log_dir")
 
@@ -50,7 +59,7 @@ puts("daemon options: #{@daemon_options.to_s}")
 Dir.mkdir(@options[:pid_dir]) unless File.exists?(@options[:pid_dir])
 Dir.mkdir(@options[:log_dir]) unless File.exists?(@options[:log_dir])
 
-Daemons.run_proc('sidekiq-cluster',
+Daemons.run_proc(@cluser_daemon_name,
     dir: @options[:pid_dir],
     dir_mode: :normal,
     log_dir: @options[:log_dir],
