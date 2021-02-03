@@ -1,4 +1,3 @@
-require_relative '../stdlib_ext'
 require_relative 'individual'
 module Sidekiq
   module Cluster
@@ -7,7 +6,7 @@ module Sidekiq
         include MemoryStrategy
 
         def offenders
-          total_ram_pct = worker_pool.map(&:memory_used_pct).sum
+          total_ram_pct = worker_pool.sum(&:memory_used_pct)
           worker_pool.cli.info("total RAM used by workers is #{'%.2f%%' % total_ram_pct}")
           if total_ram_pct > config.max_memory_percent
             worker_pool.sort_by(&:memory_used_pct).reverse[0..1]
@@ -17,4 +16,3 @@ module Sidekiq
     end
   end
 end
-
