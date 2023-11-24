@@ -1,16 +1,15 @@
-require 'forwardable'
-require 'state_machines'
+require "forwardable"
+require "state_machines"
 
-require_relative 'worker'
-require_relative 'memory'
+require_relative "worker"
+require_relative "memory"
 
-require_relative 'monitors/oom'
-require_relative 'monitors/dead_children'
+require_relative "monitors/oom"
+require_relative "monitors/dead_children"
 
 module Sidekiq
   module Cluster
     class WorkerPool
-
       include Enumerable
 
       state_machine :state, initial: :idle do
@@ -46,12 +45,12 @@ module Sidekiq
       MONITORS = [Monitors::DeadChildren, Monitors::OOM]
 
       def initialize(cli, config)
-        self.cli           = cli
-        self.config        = config
+        self.cli = cli
+        self.config = config
         self.process_count = config.process_count
-        self.workers       = []
-        self.monitors      = []
-        self.state         = :idle
+        self.workers = []
+        self.monitors = []
+        self.state = :idle
 
         @signal_received = false
       end
@@ -71,12 +70,12 @@ module Sidekiq
 
         start_monitors
 
-        info 'startup successful'
+        info "startup successful"
 
         Process.waitall
         monitors.each(&:join)
 
-        info 'all children exited, shutting down'
+        info "all children exited, shutting down"
       end
 
       def operational?
@@ -107,7 +106,7 @@ module Sidekiq
 
       def handle_signal(sig)
         cli.stderr.puts "received OS signal #{sig}"
-        @signal_received = true if (sig == 'INT' || sig == 'TERM' || sig == 'STOP')
+        @signal_received = true if (sig == "INT" || sig == "TERM" || sig == "STOP")
         workers.each { |w| w.handle_signal(sig) }
       end
     end

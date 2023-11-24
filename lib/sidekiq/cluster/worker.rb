@@ -1,10 +1,9 @@
-require 'forwardable'
-require 'state_machines'
+require "forwardable"
+require "state_machines"
 
 module Sidekiq
   module Cluster
     class Worker
-
       state_machine :state, initial: :idle do
         event :start do
           transition [:idle] => :starting
@@ -30,14 +29,14 @@ module Sidekiq
 
       def initialize(index, cli)
         self.config = cli.config
-        self.index  = index
-        self.cli    = cli
-        self.state  = :idle
+        self.index = index
+        self.cli = cli
+        self.state = :idle
       end
 
       def spawn
         if master?
-          cli.info "booting worker #{'%2d' % index} with ARGV '#{config.worker_argv.join(' ')}'"
+          cli.info "booting worker #{"%2d" % index} with ARGV '#{config.worker_argv.join(" ")}'"
           self.pid = ::Process.fork do
             # cli.close_logger
             cli.init_logger
@@ -59,12 +58,12 @@ module Sidekiq
       def memory_used_pct
         self.pid = Process.pid if pid.nil?
         result = `ps -o %mem= -p #{pid}`
-        result.nil? || result == '' ? -1 : result.to_f
+        result.nil? || result == "" ? -1 : result.to_f
       end
 
       def memory_used_percent
         mem = memory_used_pct
-        mem < 0 ? 'DEAD' : sprintf('%.2f%%', mem)
+        mem < 0 ? "DEAD" : sprintf("%.2f%%", mem)
       end
 
       def check_worker
@@ -76,9 +75,9 @@ module Sidekiq
         if master? && pid
           cli.info "NOTE: re-spawning child #{index} (pid #{pid}), memory is at #{memory_used_percent}."
           begin
-            Process.kill('USR1', pid)
+            Process.kill("USR1", pid)
             sleep 5
-            Process.kill('TERM', pid)
+            Process.kill("TERM", pid)
           rescue Errno::ESRCH
             nil
           end
@@ -93,10 +92,6 @@ module Sidekiq
         nil
       end
 
-      def pid_file
-        "#{config.pid_prefix}.#{index + 1}"
-      end
-
       def master?
         Process.pid == cli.master_pid
       end
@@ -106,9 +101,8 @@ module Sidekiq
       end
 
       def status
-        "worker.#{config.name}[index=#{index}, pid=#{pid ? pid : 'nil'}] —— memory: #{memory_used_percent}"
+        "worker.#{config.name}[index=#{index}, pid=#{pid ? pid : "nil"}] —— memory: #{memory_used_percent}"
       end
     end
   end
 end
-
