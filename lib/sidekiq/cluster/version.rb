@@ -4,21 +4,21 @@ require "colored2"
 
 module Sidekiq
   module Cluster
-    VERSION ||= "0.1.2"
+    VERSION ||= "0.1.3"
 
-    DESCRIPTION = <<-eof
+    DESCRIPTION = <<-EOF
       This library provides CLI interface for starting multiple copies of Sidekiq in parallel,
       typically to take advantage of multi-core systems.  By default it starts N - 1 processes,
       where N is the number of cores on the current system. Sidekiq Cluster is controlled with CLI
       flags that appear before `--` (double dash), while any arguments that follow double dash are
       passed to each Sidekiq process.
-    eof
+    EOF
       .gsub(/\n    /, " ").freeze
 
-    MAX_RAM_PCT ||= 80.freeze
+    MAX_RAM_PCT ||= 80
 
     # @formatter:off
-    BANNER ||= %Q(
+    BANNER ||= %(
 #{"EXAMPLES".bold.yellow}
 
     $ cd rails_app
